@@ -1,5 +1,5 @@
 const http=require('http'),fs=require('fs'),path=require('path'),{WebSocketServer}=require('ws');
-const W=3000,WT=[55,30,12,3],MAXO=520;
+const W=9000,WT=[55,30,12,3],MAXO=3700;
 const html=fs.readFileSync(path.join(__dirname,'index.html'));
 const server=http.createServer((q,s)=>{
   if(q.url==='/health'){s.end('ok');return}
@@ -11,7 +11,7 @@ const rnd=(a,b)=>a+Math.random()*(b-a);
 const num=(v,lo,hi)=>Math.max(lo,Math.min(hi,Number(v)||0));
 function pickType(){let t=Math.random()*100;for(let i=0;i<4;i++){if((t-=WT[i])<0)return i}return 0}
 function addOrb(x,y,t){const o={id:nid++,x:Math.round(num(x,5,W-5)),y:Math.round(num(y,5,W-5)),t:t??pickType()};orbs.set(o.id,o);add.push([o.id,o.x,o.y,o.t])}
-for(let i=0;i<500;i++)addOrb(rnd(30,W-30),rnd(30,W-30));
+for(let i=0;i<3500;i++)addOrb(rnd(30,W-30),rnd(30,W-30));
 add=[];
 
 wss.on('connection',ws=>{
@@ -27,7 +27,7 @@ wss.on('connection',ws=>{
     else if(m.t==='u'&&!p.dead&&Array.isArray(m.q)){
       p.x=num(m.x,0,W);p.y=num(m.y,0,W);
       const q=m.q.slice(0,100).map(v=>Math.round(num(v,0,W)));
-      p.u=[id,p.x,p.y,num(m.a,-7,7),num(m.xp,0,1e6),num(m.c,0,360),num(m.s,0,100),m.r?1:0,num(m.h,0,20),m.g?1:0,q];
+      p.u=[id,p.x,p.y,num(m.a,-7,7),num(m.xp,0,1e6),num(m.c,0,360),num(m.s,0,100),m.r?1:0,num(m.h,0,20),m.g?1:0,q,num(m.l,5,95)];
     }
     else if(m.t==='e'){
       const o=orbs.get(m.id);
@@ -47,6 +47,7 @@ wss.on('connection',ws=>{
 
 setInterval(()=>{
   const pl=[];
+  for(let i=0;i<6&&orbs.size<3500;i++)addOrb(rnd(30,W-30),rnd(30,W-30));
   for(const p of players.values())if(!p.dead&&p.u)pl.push(p.u);
   const msg=JSON.stringify({t:'s',p:pl,o:add,r:rem});
   add=[];rem=[];
